@@ -1,0 +1,13 @@
+node_modules/
+.next/
+.turbo/
+.env
+.env.*
+!.env.example
+coverage/
+dist/
+.pnpm-store/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*

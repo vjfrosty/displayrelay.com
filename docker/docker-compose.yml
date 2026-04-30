@@ -1,0 +1,77 @@
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    env_file:
+      - ../.env.local
+    depends_on:
+      - postgres
+      - redis
+      - soketi
+      - minio
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:17.9-bookworm@sha256:0042a9d3d3365f837bd561981a9098518ed529b801fb2f655338d49108a464d5
+    environment:
+      POSTGRES_DB: display_platform
+      POSTGRES_USER: display_platform
+      POSTGRES_PASSWORD: display_platform
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4.8-alpine@sha256:7aec734b2bb298a1d769fd8729f13b8514a41bf90fcdd1f38ec52267fbaa8ee6
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    restart: unless-stopped
+
+  soketi:
+    image: quay.io/soketi/soketi:e446df8e3e06b8430d75cf58555bc409bf240a4e-16-alpine@sha256:20f88745c8053675af75d9e57baf1ef3f4fe7b39d2fd0e6d858d5c483981b445
+    environment:
+      SOKETI_DEFAULT_APP_ID: ${SOKETI_APP_ID:-display-platform}
+      SOKETI_DEFAULT_APP_KEY: ${SOKETI_APP_KEY:-display-platform-key}
+      SOKETI_DEFAULT_APP_SECRET: ${SOKETI_APP_SECRET:-display-platform-secret}
+      SOKETI_REDIS_HOST: redis
+      SOKETI_REDIS_PORT: 6379
+    depends_on:
+      - redis
+    ports:
+      - "6001:6001"
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin123}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - miniodata:/data
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.30.0-alpine@sha256:0272e4604ed93c1792f03695a033a6e8546840f86e0de20a884bb17d2c924883
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+    depends_on:
+      - app
+      - soketi
+      - minio
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  redisdata:
+  miniodata:

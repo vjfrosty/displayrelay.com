@@ -1,0 +1,8 @@
+node_modules/
+.next/
+.git/
+docs/
+AGENTS.md
+Display Relay_Project Setup & Architecture.md
+display-platform-vibe-coding-guide.docx.md
+README_ALL.md

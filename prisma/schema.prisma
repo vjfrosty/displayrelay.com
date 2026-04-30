@@ -1,0 +1,666 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Client {
+  id         String          @id @default(uuid())
+  name       String
+  vertical   String?
+  city       String?
+  timezone   String          @default("UTC")
+  brandVoice String?
+  status     String          @default("active")
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  branding   ClientBranding?
+
+  @@index([status])
+  @@index([vertical])
+  @@map("clients")
+}
+
+model ClientBranding {
+  id               String   @id @default(uuid())
+  clientId         String   @unique
+  primaryColor     String   @default("#0f172a")
+  secondaryColor   String   @default("#ffffff")
+  accentColor      String   @default("#ea580c")
+  fontFamily       String   @default("Segoe UI")
+  logoUrl          String?
+  secondaryLogoUrl String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  client           Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("client_branding")
+}
+
+model Plan {
+  id           String  @id @default(uuid())
+  slug         String  @unique
+  name         String
+  priceMonthly Int
+  limits       Json
+  features     Json
+  isActive     Boolean @default(true)
+
+  @@index([isActive])
+  @@map("plans")
+}
+
+model Subscription {
+  id                 String   @id @default(uuid())
+  clientId           String   @unique
+  planSlug           String   @default("essential")
+  status             String   @default("active")
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd  Boolean  @default(false)
+  stripeCustomerId   String?
+  stripeSubId        String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([planSlug])
+  @@index([status])
+  @@map("subscriptions")
+}
+
+model UsageRecord {
+  id        String   @id @default(uuid())
+  clientId  String
+  metric    String
+  period    String
+  count     Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@unique([clientId, metric, period])
+  @@index([clientId])
+  @@index([metric, period])
+  @@map("usage_records")
+}
+
+model GenerationLog {
+  id           String   @id @default(uuid())
+  clientId     String
+  metric       String
+  aiModel      String?
+  promptSlug   String?
+  promptTokens Int?
+  outputTokens Int?
+  durationMs   Int?
+  success      Boolean  @default(true)
+  error        String?
+  createdAt    DateTime @default(now())
+
+  @@index([clientId])
+  @@index([clientId, metric])
+  @@index([promptSlug])
+  @@map("generation_logs")
+}
+
+model AppSetting {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       Json
+  type        String
+  label       String
+  description String?
+  category    String
+  isSecret    Boolean  @default(false)
+  updatedAt   DateTime @updatedAt
+  updatedBy   String?
+
+  @@index([category])
+  @@map("app_settings")
+}
+
+model TenantSetting {
+  id        String   @id @default(uuid())
+  clientId  String
+  key       String
+  value     Json
+  updatedAt DateTime @updatedAt
+
+  @@unique([clientId, key])
+  @@index([clientId])
+  @@map("tenant_settings")
+}
+
+model PromptTemplate {
+  id                 String   @id @default(uuid())
+  slug               String   @unique
+  name               String
+  description        String?
+  category           String
+  systemPrompt       String
+  userPromptTemplate String
+  variables          Json
+  defaultModel       String
+  temperature        Float    @default(0.7)
+  maxTokens          Int      @default(1000)
+  responseFormat     String   @default("json")
+  isActive           Boolean  @default(true)
+  version            Int      @default(1)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([category])
+  @@index([isActive])
+  @@map("prompt_templates")
+}
+
+model TenantPromptOverride {
+  id                 String   @id @default(uuid())
+  clientId           String
+  promptSlug         String
+  systemPrompt       String?
+  userPromptTemplate String?
+  temperature        Float?
+  maxTokens          Int?
+  defaultModel       String?
+  isActive           Boolean  @default(true)
+  updatedAt          DateTime @updatedAt
+
+  @@unique([clientId, promptSlug])
+  @@index([clientId])
+  @@index([promptSlug])
+  @@map("tenant_prompt_overrides")
+}
+
+model FeatureFlagOverride {
+  id        String    @id @default(uuid())
+  clientId  String
+  feature   String
+  enabled   Boolean   @default(true)
+  reason    String?
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@unique([clientId, feature])
+  @@index([clientId])
+  @@index([expiresAt])
+  @@map("feature_flag_overrides")
+}
+
+model VerticalConfig {
+  id            String   @id @default(uuid())
+  vertical      String   @unique
+  label         String
+  config        Json
+  promptContext String
+  updatedAt     DateTime @updatedAt
+
+  @@map("vertical_configs")
+}
+
+model Screen {
+  id                 String    @id @default(uuid())
+  clientId           String
+  name               String
+  status             String    @default("ready_to_play")
+  tags               String[]  @default([])
+  location           String?
+  space              String?
+  screenType         String?
+  orientation        String    @default("landscape")
+  pairingCode        String?
+  pairingCodeExpiry  DateTime?
+  operationHours     Json?
+  lastHeartbeatAt    DateTime?
+  assignedPlaylistId String?
+  assignedScheduleId String?
+  metadata           Json?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  assignedPlaylist   Playlist? @relation("ScreenPlaylists", fields: [assignedPlaylistId], references: [id], onDelete: SetNull)
+  assignedSchedule   Schedule? @relation("ScreenSchedules", fields: [assignedScheduleId], references: [id], onDelete: SetNull)
+
+  @@index([clientId])
+  @@index([clientId, status])
+  @@index([location])
+  @@index([space])
+  @@index([pairingCode])
+  @@map("screens")
+}
+
+model MediaFolder {
+  id        String        @id @default(uuid())
+  clientId  String
+  name      String
+  parentId  String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  parent    MediaFolder?  @relation("MediaFolderTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children  MediaFolder[] @relation("MediaFolderTree")
+  assets    MediaAsset[]
+
+  @@unique([clientId, parentId, name])
+  @@index([clientId])
+  @@map("media_folders")
+}
+
+model MediaAsset {
+  id           String       @id @default(uuid())
+  clientId     String
+  folderId     String?
+  name         String
+  fileName     String
+  objectKey    String       @unique
+  publicUrl    String
+  thumbnailUrl String?
+  mimeType     String
+  sizeBytes    BigInt       @default(0)
+  width        Int?
+  height       Int?
+  durationSecs Int?
+  metadata     Json?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  folder       MediaFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+
+  @@index([clientId])
+  @@index([folderId])
+  @@index([mimeType])
+  @@map("media_assets")
+}
+
+model Playlist {
+  id                String         @id @default(uuid())
+  clientId          String
+  name              String
+  description       String?
+  status            String         @default("draft")
+  totalDurationSecs Int            @default(0)
+  publishedAt       DateTime?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  items             PlaylistItem[]
+  assignedScreens   Screen[]       @relation("ScreenPlaylists")
+  scheduleSlots     ScheduleSlot[]
+
+  @@index([clientId])
+  @@index([clientId, status])
+  @@map("playlists")
+}
+
+model PlaylistItem {
+  id                  String   @id @default(uuid())
+  clientId            String
+  playlistId          String
+  itemType            String
+  resourceId          String?
+  config              Json?
+  displayDurationSecs Int      @default(8)
+  order               Int
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  playlist            Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+
+  @@unique([playlistId, order])
+  @@index([clientId])
+  @@index([playlistId])
+  @@index([itemType])
+  @@map("playlist_items")
+}
+
+model Schedule {
+  id              String         @id @default(uuid())
+  clientId        String
+  name            String
+  description     String?
+  status          String         @default("draft")
+  timezone        String?
+  zoneLayout      String         @default("main")
+  publishedAt     DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  slots           ScheduleSlot[]
+  assignedScreens Screen[]       @relation("ScreenSchedules")
+
+  @@index([clientId])
+  @@index([clientId, status])
+  @@index([zoneLayout])
+  @@map("schedules")
+}
+
+model ScheduleSlot {
+  id          String    @id @default(uuid())
+  clientId    String
+  scheduleId  String
+  playlistId  String?
+  dayOfWeek   Int
+  startTime   String
+  endTime     String
+  zoneLayout  String    @default("main")
+  weatherCond String?
+  priority    Int       @default(0)
+  config      Json?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  schedule    Schedule  @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  playlist    Playlist? @relation(fields: [playlistId], references: [id], onDelete: SetNull)
+
+  @@index([clientId])
+  @@index([scheduleId, dayOfWeek])
+  @@index([weatherCond])
+  @@index([zoneLayout])
+  @@map("schedule_slots")
+}
+
+model Template {
+  id              String              @id @default(uuid())
+  clientId        String?
+  name            String
+  description     String?
+  category        String
+  mainGroup       String              @default("all")
+  orientation     String              @default("horizontal")
+  vertical        String?
+  thumbnailUrl    String?
+  editorState     Json
+  htmlContent     String
+  cssContent      String              @default("")
+  isLibrary       Boolean             @default(false)
+  isPublished     Boolean             @default(false)
+  publishedAt     DateTime?
+  publishedBy     String?
+  forkedFromId    String?
+  currentVersion  Int                 @default(1)
+  aiGenerated     Boolean             @default(false)
+  rating          Float?
+  useCount        Int                 @default(0)
+  deletedAt       DateTime?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  parentTemplate  Template?           @relation("TemplateForks", fields: [forkedFromId], references: [id], onDelete: SetNull)
+  forkedTemplates Template[]          @relation("TemplateForks")
+  versions        TemplateVersion[]
+  tags            TemplateTag[]
+  ratings         TemplateRating[]
+  favourites      TemplateFavourite[]
+
+  @@index([clientId])
+  @@index([category])
+  @@index([vertical])
+  @@index([isLibrary, isPublished])
+  @@map("templates")
+}
+
+model TemplateVersion {
+  id           String   @id @default(uuid())
+  templateId   String
+  version      Int
+  editorState  Json
+  htmlContent  String
+  cssContent   String   @default("")
+  thumbnailUrl String?
+  changeNote   String?
+  createdBy    String?
+  createdAt    DateTime @default(now())
+  template     Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@unique([templateId, version])
+  @@index([templateId])
+  @@map("template_versions")
+}
+
+model TemplateTag {
+  id         String   @id @default(uuid())
+  templateId String
+  tag        String
+  template   Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@unique([templateId, tag])
+  @@index([tag])
+  @@map("template_tags")
+}
+
+model TemplateRating {
+  id         String   @id @default(uuid())
+  templateId String
+  clientId   String
+  rating     Int
+  createdAt  DateTime @default(now())
+  template   Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@unique([templateId, clientId])
+  @@index([clientId])
+  @@map("template_ratings")
+}
+
+model TemplateFavourite {
+  id         String   @id @default(uuid())
+  templateId String
+  clientId   String
+  createdAt  DateTime @default(now())
+  template   Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@unique([templateId, clientId])
+  @@index([clientId])
+  @@map("template_favourites")
+}
+
+model Deck {
+  id           String   @id @default(uuid())
+  clientId     String
+  name         String
+  prompt       String?
+  promptSlug   String?
+  aiModel      String?
+  theme        String?
+  status       String   @default("draft")
+  durationSecs Int      @default(0)
+  tokensUsed   Json?
+  metadata     Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  slides       Slide[]
+
+  @@index([clientId])
+  @@index([clientId, status])
+  @@map("decks")
+}
+
+model Slide {
+  id          String   @id @default(uuid())
+  clientId    String
+  deckId      String?
+  icon        String?
+  tag         String?
+  title       String
+  layout      String
+  bodyHtml    String
+  imageIntent Json?
+  htmlContent String?
+  jsonState   Json?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deck        Deck?    @relation(fields: [deckId], references: [id], onDelete: SetNull)
+
+  @@index([clientId])
+  @@index([deckId])
+  @@map("slides")
+}
+
+model AiContentLibrary {
+  id               String   @id @default(uuid())
+  clientId         String?
+  category         String
+  vertical         String?
+  contentType      String
+  sourcePromptSlug String?
+  title            String
+  payload          Json
+  tags             String[] @default([])
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([category])
+  @@index([vertical])
+  @@map("ai_content_library")
+}
+
+model AppIntegration {
+  id        String   @id @default(uuid())
+  clientId  String
+  type      String
+  name      String
+  provider  String?
+  url       String?
+  config    Json?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([type])
+  @@map("app_integrations")
+}
+
+model Availability {
+  id              String    @id @default(uuid())
+  clientId        String
+  resourceId      String
+  resourceType    String?
+  externalEventId String?
+  status          String    @default("busy")
+  startAt         DateTime
+  endAt           DateTime
+  title           String?
+  metadata        Json?
+  syncedAt        DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([clientId, resourceId, startAt, endAt])
+  @@index([clientId])
+  @@index([clientId, status])
+  @@index([resourceId])
+  @@index([startAt])
+  @@map("availability")
+}
+
+model ScheduleEntry {
+  id         String   @id @default(uuid())
+  clientId   String
+  scheduleId String?
+  screenId   String?
+  playlistId String?
+  startsAt   DateTime
+  endsAt     DateTime
+  zoneLayout String   @default("main")
+  status     String   @default("scheduled")
+  data       Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([clientId, status])
+  @@index([startsAt])
+  @@map("schedule_entries")
+}
+
+model ResourceCalendar {
+  id                String    @id @default(uuid())
+  clientId          String
+  resourceId        String
+  name              String
+  googleCalendarId  String
+  syncChannelId     String?
+  syncResourceToken String?
+  channelExpiresAt  DateTime?
+  lastSyncedAt      DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@unique([clientId, resourceId])
+  @@index([clientId])
+  @@index([channelExpiresAt])
+  @@map("resource_calendars")
+}
+
+model WebhookEvent {
+  id             String    @id @default(uuid())
+  clientId       String
+  eventType      String
+  source         String?
+  status         String    @default("pending")
+  idempotencyKey String
+  payload        Json
+  retries        Int       @default(0)
+  processedAt    DateTime?
+  error          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([clientId, idempotencyKey])
+  @@index([clientId])
+  @@index([clientId, status])
+  @@index([eventType])
+  @@map("webhook_events")
+}
+
+model WorkflowRule {
+  id           String   @id @default(uuid())
+  clientId     String
+  name         String
+  triggerEvent String
+  condition    Json
+  actionType   String
+  actionConfig Json
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([clientId, isActive])
+  @@index([triggerEvent])
+  @@map("workflow_rules")
+}
+
+model ApiToken {
+  id         String    @id @default(uuid())
+  clientId   String
+  screenId   String?
+  name       String
+  tokenHash  String    @unique
+  tokenType  String    @default("api")
+  scopes     Json?
+  lastUsedAt DateTime?
+  expiresAt  DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([clientId])
+  @@index([tokenType])
+  @@index([expiresAt])
+  @@map("api_tokens")
+}
+
+model ImageCache {
+  id          String   @id @default(uuid())
+  cacheKey    String   @unique
+  clientId    String?
+  provider    String
+  query       String
+  orientation String   @default("any")
+  results     Json
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([provider, expiresAt])
+  @@index([query, provider])
+  @@index([expiresAt])
+  @@map("image_cache")
+}

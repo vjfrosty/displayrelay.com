@@ -5,11 +5,11 @@ This file is the planning hub for Phases 1-6. Use it to determine what is active
 ## Current State
 
 **Current Phase:** Phase 1 - Core Infrastructure & Config Layer  
-**Current Task:** TASK 1.1 - Docker Compose Full Stack  
-**Status:** Not Started  
+**Current Task:** TASK 1.2 - Prisma Schema — Core Tables  
+**Status:** In Progress — Task 1.1 repo outputs and Task 1.2 schema/config are implemented, but live validation is blocked  
 **Primary Runbook:** `docs/phases/phase-1-core.md`  
-**Blocked By:** None  
-**Next Validation Target:** `docker compose ps` shows all 6 services as running.
+**Blocked By:** Docker daemon / compose runtime unavailable in this session, so Postgres at `postgres:5432` is unreachable  
+**Next Validation Target:** `docker compose -f docker/docker-compose.yml up -d` succeeds, `docker compose -f docker/docker-compose.yml ps` shows all 6 services running, and `corepack pnpm@10.33.2 prisma migrate dev --name init --config=./prisma.config.ts` succeeds.
 
 ---
 
@@ -56,23 +56,24 @@ Follow this dependency chain exactly:
 
 Do not start Phase 2 until the Phase 1 gate passes. Do not start Tasks 3.2-3.4 until the earlier Phase 3 dependency chain and the required Phase 2 outputs exist. Do not start later phases until the prior phase completion gate is satisfied.
 
-## Next Up: TASK 1.1
+## Next Up: TASK 1.2
 
-- **Task Description:** Docker Compose Full Stack
+- **Task Description:** Close the outstanding live Docker Compose validation from Task 1.1 and complete the initial Prisma migration for Task 1.2.
 - **Agent To Use:** `Infrastructure`
-- **Prerequisites:** Docker and Docker Compose installed, domain or localhost ready, and `.env.local` populated from Section 8.
-- **Architecture Context:** `Display Relay_Project Setup & Architecture.md` Sections 33.1, 33.2, 33.3, and 8.
-- **Vibe Guide Context:** Phase 1 / Task 1.1 card in `display-platform-vibe-coding-guide.docx.md`.
+- **Prerequisites:** Docker daemon accessible from this session, `.env.local` populated, and the existing repo scaffold unchanged.
+- **Architecture Context:** `Display Relay_Project Setup & Architecture.md` Sections 33.1, 33.2, 33.3, 8, 4.2, 5.1, and 9.
+- **Vibe Guide Context:** Phase 1 / Task 1.1 and Task 1.2 cards in `display-platform-vibe-coding-guide.docx.md`.
 - **Primary Runbook:** `docs/phases/phase-1-core.md`
-- **Acceptance Target:** `docker compose ps` shows all 6 services running, `curl localhost:9001` returns the MinIO login page, and `curl localhost:6001` returns a Soketi response.
-- **Immediate Validation Check:** After `docker compose up -d`, verify postgres on 5432, redis on 6379, soketi on 6001, and the MinIO console on 9001.
-- **Next Task If Passed:** TASK 1.2 - Prisma Schema — Core Tables
+- **Repo State:** Task 1.1 files exist and `docker compose config` passes. Task 1.2 Prisma files exist and `prisma validate --config=./prisma.config.ts`, `prisma format --config=./prisma.config.ts`, and `pnpm typecheck` pass.
+- **Acceptance Target:** `docker compose ps` shows all 6 services running, `curl localhost:9001` returns the MinIO login page, `curl localhost:6001` returns a Soketi response, and `prisma migrate dev` succeeds.
+- **Immediate Validation Check:** Run `docker compose -f docker/docker-compose.yml up -d`, `docker compose -f docker/docker-compose.yml ps`, `curl localhost:9001`, `curl localhost:6001`, then `corepack pnpm@10.33.2 prisma migrate dev --name init --config=./prisma.config.ts`.
+- **Next Task If Passed:** TASK 1.3 - Prisma Seed File
 
 ## Phase Tracking
 
 ### Phase 1: Core Infrastructure & Config Layer
-- [ ] **Task 1.1:** Docker Compose Full Stack
-- [ ] **Task 1.2:** Prisma Schema — Core Tables
+- [ ] **Task 1.1:** Docker Compose Full Stack — repo files created and `docker compose config` passes; live service validation pending Docker access
+- [ ] **Task 1.2:** Prisma Schema — Core Tables — schema/config validation passes; initial migration pending reachable Postgres
 - [ ] **Task 1.3:** Prisma Seed File
 - [ ] **Task 1.4:** `lib/settings.ts` and `lib/prompts.ts`
 - [ ] **Task 1.5:** Auth — NextAuth.js + API Bearer Tokens
