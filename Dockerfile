@@ -19,6 +19,8 @@ FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+RUN pnpm exec prisma generate --config=./prisma.config.ts
+
 RUN pnpm build
 
 FROM node:24.15.0-bookworm-slim@sha256:03eae3ef7e88a9de535496fb488d67e02b9d96a063a8967bae657744ecd513f2 AS runner

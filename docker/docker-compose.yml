@@ -5,6 +5,14 @@ services:
       dockerfile: Dockerfile
     env_file:
       - ../.env.local
+    environment:
+      # .env.local's DATABASE_URL/REDIS_URL/MINIO_ENDPOINT/SOKETI_HOST use host-mapped
+      # ports for host-run tooling (Prisma CLI, pnpm dev/test) — those aren't reachable
+      # from inside this container. Override with the internal compose network names.
+      DATABASE_URL: postgresql://display_platform:display_platform@postgres:5432/display_platform
+      REDIS_URL: redis://redis:6379
+      MINIO_ENDPOINT: http://minio:9000
+      SOKETI_HOST: soketi
     depends_on:
       - postgres
       - redis
@@ -19,7 +27,7 @@ services:
       POSTGRES_USER: display_platform
       POSTGRES_PASSWORD: display_platform
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     restart: unless-stopped
@@ -27,7 +35,7 @@ services:
   redis:
     image: redis:7.4.8-alpine@sha256:7aec734b2bb298a1d769fd8729f13b8514a41bf90fcdd1f38ec52267fbaa8ee6
     ports:
-      - "6379:6379"
+      - "6380:6379"
     volumes:
       - redisdata:/data
     restart: unless-stopped
@@ -53,8 +61,8 @@ services:
       MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin123}
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "9010:9000"
+      - "9011:9001"
     volumes:
       - miniodata:/data
     restart: unless-stopped

@@ -7,9 +7,9 @@ This folder contains the required phase wrap-up documents written after a phase 
 
 ## Result Files
 
-- `phase-1-result.md` — not generated yet
-- `phase-2-result.md` — not generated yet
-- `phase-3-result.md` — not generated yet
+- `phase-1-result.md` — generated 2026-08-21
+- `phase-2-result.md` — generated 2026-08-22
+- `phase-3-result.md` — generated 2026-08-24
 - `phase-4-result.md` — not generated yet
 - `phase-5-result.md` — not generated yet
 - `phase-6-result.md` — not generated yet

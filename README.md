@@ -53,7 +53,7 @@ Current baseline:
 |---|---|
 | Node.js | 24.15.0 LTS |
 | pnpm | 10.33.2 |
-| Next.js | 16.2.4 |
+| Next.js | 16.3.2 |
 | React | 19.2.5 |
 | TypeScript | 6.0.3 |
 | NextAuth.js | 4.24.14 |

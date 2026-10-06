@@ -16,7 +16,7 @@ Use these pinned versions as the baseline for every later phase unless a later p
 |---|---|---|---|
 | Runtime | Node.js | 24.15.0 LTS | Use the same runtime locally, in CI, and in containers where possible. |
 | Package manager | pnpm | 10.33.2 | Pin via the `packageManager` field in `package.json`. |
-| App framework | `next` | 16.2.4 | Use this instead of the older `14.x` target from the architecture draft. |
+| App framework | `next` | 16.3.2 | Use this instead of the older `14.x` target from the architecture draft. |
 | UI runtime | `react` and `react-dom` | 19.2.5 | Keep React aligned with the Next.js major. |
 | Language | `typescript` | 6.0.3 | Pin exactly to avoid compiler drift during the build-out. |
 | Auth | `next-auth` | 4.24.14 | Use the maintained v4 line and harden callbacks and logging. |

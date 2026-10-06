@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 export default function HomePage() {
   return (
     <main className="shell">
@@ -22,16 +20,12 @@ export default function HomePage() {
           <article className="card">
             <h2>Next Up</h2>
             <ul>
-              <li>Install dependencies and generate the pnpm lockfile.</li>
-              <li>Run the first compose validation once Docker Desktop is available.</li>
-              <li>Move into Prisma schema work for Task 1.2.</li>
+              <li>Phase 1 (infrastructure, auth, usage gates) is complete.</li>
+              <li>Phase 2 is next: screen pairing and the admin screen list.</li>
             </ul>
           </article>
         </div>
         <div className="action-row">
-          <Link className="button" href="/admin">
-            Open Admin Placeholder
-          </Link>
           <a className="button secondary" href="/api/health">
             Check Health Endpoint
           </a>
